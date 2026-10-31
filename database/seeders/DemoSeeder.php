@@ -182,7 +182,7 @@ class DemoSeeder extends Seeder
         }
     }
 
-    private function coursesConakry(Company $company, User $chef): void
+        private function coursesConakry(Company $company, User $chef): void
     {
         if (Course::where('company_id', $company->id)->exists()) {
             return;
@@ -206,13 +206,13 @@ class DemoSeeder extends Seeder
             'statut' => 'livree',
             'livree_a' => $hier->copy()->setTime(13, 40),
             'clients' => [
-                [$madina, 1500, 'Riz', 2000],
-                [$kaloum, 900, 'Huile', 600],
+                [$madina, 12000000, 'Riz', 2000],
+                [$kaloum, 7500000, 'Huile', 600],
             ],
             'depenses' => [
-                ['carburant', 85.50, 'Plein'],
-                ['peage', 12, null],
-                ['repas', 8, 'Déjeuner'],
+                ['carburant', 850000, 'Plein'],
+                ['peage', 100000, null],
+                ['repas', 80000, 'Déjeuner'],
             ],
         ]);
 
@@ -225,11 +225,11 @@ class DemoSeeder extends Seeder
             'statut' => 'livree',
             'livree_a' => $avantHier->copy()->setTime(17, 30),
             'clients' => [
-                [$kaloum, 1200, 'Ciment', 5000],
+                [$kaloum, 9500000, 'Ciment', 5000],
             ],
             'depenses' => [
-                ['carburant', 120, 'Plein'],
-                ['autre', 25, 'Réparation pneu'],
+                ['carburant', 1200000, 'Plein'],
+                ['autre', 250000, 'Réparation pneu'],
             ],
         ]);
 
@@ -241,10 +241,10 @@ class DemoSeeder extends Seeder
             'prevue_a' => now()->addHours(3),
             'statut' => 'en_cours',
             'clients' => [
-                [$dalaba, 800, 'Légumes', 400],
+                [$dalaba, 4000000, 'Légumes', 400],
             ],
             'depenses' => [
-                ['carburant', 60, 'Plein'],
+                ['carburant', 600000, 'Plein'],
             ],
         ]);
 
@@ -256,7 +256,7 @@ class DemoSeeder extends Seeder
             'prevue_a' => now()->subHour(),
             'statut' => 'en_cours',
             'clients' => [
-                [$madina, 650, 'Matériaux', 1500],
+                [$madina, 5500000, 'Matériaux', 1500],
             ],
         ]);
 
@@ -268,7 +268,7 @@ class DemoSeeder extends Seeder
             'prevue_a' => now()->addHours(8),
             'statut' => 'planifiee',
             'clients' => [
-                [$kaloum, 1000, 'Meubles', 800],
+                [$kaloum, 8000000, 'Meubles', 800],
             ],
         ]);
 
@@ -280,7 +280,7 @@ class DemoSeeder extends Seeder
             'prevue_a' => now()->addDay()->addHours(6),
             'statut' => 'annulee',
             'clients' => [
-                [$dalaba, 500, 'Colis', 50],
+                [$dalaba, 2000000, 'Colis', 50],
             ],
         ]);
     }
@@ -306,10 +306,10 @@ class DemoSeeder extends Seeder
             'statut' => 'livree',
             'livree_a' => $hier->copy()->setTime(11, 30),
             'clients' => [
-                [$labe, 700, 'Poissons', 300],
+                [$labe, 3500000, 'Poissons', 300],
             ],
             'depenses' => [
-                ['carburant', 40, 'Plein'],
+                ['carburant', 400000, 'Plein'],
             ],
         ]);
 
@@ -320,7 +320,7 @@ class DemoSeeder extends Seeder
             'prevue_a' => now()->addDay()->addHours(5),
             'statut' => 'planifiee',
             'clients' => [
-                [$pita, 450, 'Bois', 900],
+                [$pita, 4500000, 'Bois', 900],
             ],
         ]);
     }

@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Closure;
 use Filament\Forms\Get;
 use Illuminate\Support\Carbon;
+use App\Support\Money;
 
 
 
@@ -101,9 +102,10 @@ class CourseResource extends Resource
                     Forms\Components\TextInput::make('montant_facture')
                         ->label('Montant facturé')
                         ->numeric()
+                        ->integer()
                         ->required()
                         ->minValue(0)
-                        ->suffix('€'),
+                        ->suffix('GNF'),
                     Forms\Components\TextInput::make('type_marchandise')
                         ->maxLength(255),
                     Forms\Components\TextInput::make('poids_kg')
@@ -141,15 +143,15 @@ class CourseResource extends Resource
                     ->label('Véhicule'),
                 Tables\Columns\TextColumn::make('montant_facture_total')
                     ->label('Facturé')
-                    ->money('eur'),
+                    ->formatStateUsing(fn ($state) => Money::format($state)),
                 Tables\Columns\TextColumn::make('total_depenses')
                     ->label('Dépenses')
-                    ->money('eur'),
+                    ->formatStateUsing(fn ($state) => Money::format($state)),
                 Tables\Columns\TextColumn::make('montant_net')
                     ->label('Net')
-                    ->money('eur')
+                    ->formatStateUsing(fn ($state) => Money::format($state))
                     ->color(fn ($state) => $state < 0 ? 'danger' : 'success'),
-                Tables\Columns\TextColumn::make('statut_affiche')
+                                Tables\Columns\TextColumn::make('statut_affiche')
                     ->label('Statut')
                     ->state(function (Course $record): string {
                         return match (true) {

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CourseResource\RelationManagers;
 
+use App\Support\Money;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Sum;
@@ -28,8 +29,12 @@ class ExpensesRelationManager extends RelationManager
                     ->formatStateUsing(fn (string $state): string => ucfirst($state)),
                 Tables\Columns\TextColumn::make('montant')
                     ->label('Montant')
-                    ->money('eur')
-                    ->summarize(Sum::make()->label('Total')->money('eur')),
+                    ->formatStateUsing(fn ($state) => Money::format($state))
+                    ->summarize(
+                        Sum::make()
+                            ->label('Total')
+                            ->formatStateUsing(fn ($state) => Money::format($state))
+                    ),
                 Tables\Columns\TextColumn::make('description')
                     ->label('Détail')
                     ->placeholder('—'),

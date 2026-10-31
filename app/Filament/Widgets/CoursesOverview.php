@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Models\CourseClient;
 use App\Models\CourseExpense;
 use App\Models\Vehicle;
+use App\Support\Money;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -67,18 +68,13 @@ class CoursesOverview extends StatsOverviewWidget
             Stat::make('Véhicules disponibles', $disponibles . ' / ' . $totalVehicules)
                 ->description('Hors entretien et hors course')
                 ->icon('heroicon-o-key'),
-            Stat::make('Facturé ce mois', $this->euro($facture))
+            Stat::make('Facturé ce mois', Money::format($facture))
                 ->description('Courses livrées')
                 ->icon('heroicon-o-banknotes'),
-            Stat::make('Net ce mois', $this->euro($net))
-                ->description('Après ' . $this->euro($depenses) . ' de dépenses')
+            Stat::make('Net ce mois', Money::format($net))
+                ->description('Après ' . Money::format($depenses) . ' de dépenses')
                 ->color($net < 0 ? 'danger' : 'success')
-                ->icon('heroicon-o-currency-euro'),
+                ->icon('heroicon-o-currency-dollar'),
         ];
-    }
-
-    private function euro(float|int|string $value): string
-    {
-        return number_format((float) $value, 2, ',', ' ') . ' €';
     }
 }

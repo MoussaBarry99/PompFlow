@@ -11,6 +11,12 @@
     @php
         $isDriver = auth()->user()->role === 'chauffeur';
         $isOpen = in_array($course->statut, ['planifiee', 'en_cours'], true);
+        $typesDepense = [
+            'carburant' => 'Carburant',
+            'peage' => 'Péage',
+            'repas' => 'Repas',
+            'autre' => 'Autre',
+        ];
     @endphp
 
     <div class="py-6">
@@ -67,7 +73,7 @@
                         <li class="py-2 flex items-center justify-between gap-3">
                             <div>
                                 <p class="text-sm font-medium text-gray-800">
-                                    {{ ucfirst($expense->type) }} · {{ number_format((float) $expense->montant, 2, ',', ' ') }} €
+                                    {{ $typesDepense[$expense->type] ?? ucfirst($expense->type) }} · {{ \App\Support\Money::format($expense->montant) }}
                                 </p>
                                 @if ($expense->description)
                                     <p class="text-xs text-gray-500">{{ $expense->description }}</p>
@@ -93,13 +99,12 @@
                           class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                         @csrf
                         <select name="type" required class="rounded-md border-gray-300 text-sm">
-                            <option value="carburant">Carburant</option>
-                            <option value="peage">Péage</option>
-                            <option value="repas">Repas</option>
-                            <option value="autre">Autre</option>
+                            @foreach ($typesDepense as $valeur => $libelle)
+                                <option value="{{ $valeur }}">{{ $libelle }}</option>
+                            @endforeach
                         </select>
-                        <input type="number" name="montant" step="0.01" min="0.01" required
-                               placeholder="Montant (€)" class="rounded-md border-gray-300 text-sm">
+                        <input type="number" name="montant" step="1" min="1" inputmode="numeric" required
+                               placeholder="Montant (GNF)" class="rounded-md border-gray-300 text-sm">
                         <input type="text" name="description" maxlength="255"
                                placeholder="Détail (optionnel)" class="rounded-md border-gray-300 text-sm">
                         <button class="sm:col-span-3 rounded-md bg-gray-800 px-4 py-2 text-sm font-medium text-white">

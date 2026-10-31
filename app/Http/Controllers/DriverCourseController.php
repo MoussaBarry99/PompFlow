@@ -58,7 +58,7 @@ class DriverCourseController extends Controller
 
         $data = $request->validate([
             'type' => 'required|in:carburant,peage,repas,autre',
-            'montant' => 'required|numeric|min:0.01|max:99999',
+            'montant' => 'required|integer|min:1|max:999999999',
             'description' => 'nullable|string|max:255',
         ]);
 

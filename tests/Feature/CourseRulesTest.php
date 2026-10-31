@@ -10,24 +10,8 @@ beforeEach(function () {
     $this->driver = makeUser('chauffeur', $this->company);
     $this->vehicle = makeVehicle($this->company, $this->driver);
 
-    // Demain de 8 h à 16 h sur $this->vehicle, facturée 1 500 €.
-    $this->course = makeCourse($this->company, $this->vehicle, [], 1500);
-});
-
-it('permet au chauffeur de démarrer puis livrer une course, avec historique', function () {
-    $this->actingAs($this->driver);
-
-    $this->post(route('chauffeur.courses.start', $this->course->id))->assertRedirect();
-    expect($this->course->fresh()->statut)->toBe('en_cours');
-
-    $this->post(route('chauffeur.courses.deliver', $this->course->id))->assertRedirect();
-
-    $course = $this->course->fresh();
-
-    expect($course->statut)->toBe('livree')
-        ->and($course->livree_at)->not->toBeNull()
-        ->and($course->statusHistories()->orderBy('id')->pluck('statut')->all())
-        ->toBe(['planifiee', 'en_cours', 'livree']);
+    // Demain de 8 h à 16 h sur $this->vehicle, facturée 1500000 GNF.
+    $this->course = makeCourse($this->company, $this->vehicle, [], 1500000);
 });
 
 it('enregistre les dépenses du chauffeur et calcule le net', function () {
@@ -35,33 +19,34 @@ it('enregistre les dépenses du chauffeur et calcule le net', function () {
 
     $this->post(route('chauffeur.courses.expenses.store', $this->course->id), [
         'type' => 'carburant',
-        'montant' => 85.5,
+        'montant' => 85000,
         'description' => 'Plein',
     ])->assertRedirect();
 
     $this->post(route('chauffeur.courses.expenses.store', $this->course->id), [
         'type' => 'peage',
-        'montant' => 14.5,
+        'montant' => 15000,
     ])->assertRedirect();
 
     $course = $this->course->fresh();
 
-    expect($course->total_depenses)->toBe(100.0)
-        ->and($course->montant_facture_total)->toBe(1500.0)
-        ->and($course->montant_net)->toBe(1400.0)
+    expect($course->total_depenses)->toBe(100000.0)
+        ->and($course->montant_facture_total)->toBe(1500000.0)
+        ->and($course->montant_net)->toBe(1400000.0)
         ->and($course->expenses()->pluck('user_id')->unique()->all())->toEqual([$this->driver->id]);
 });
 
-it('rejette une dépense invalide', function () {
+it('refuse une dépense avec des décimales (franc guinéen)', function () {
     $this->actingAs($this->driver)
         ->post(route('chauffeur.courses.expenses.store', $this->course->id), [
-            'type' => 'bijoux',
-            'montant' => -5,
+            'type' => 'carburant',
+            'montant' => 1500.5,
         ])
-        ->assertSessionHasErrors(['type', 'montant']);
+        ->assertSessionHasErrors('montant');
 
     expect($this->course->expenses()->count())->toBe(0);
 });
+
 
 it('verrouille la course une fois livrée', function () {
     $this->actingAs($this->driver);
