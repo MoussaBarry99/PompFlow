@@ -30,26 +30,27 @@ it('envoie chaque rôle vers son espace après connexion', function () {
         ->assertRedirect(route('chauffeur.courses.index'));
 });
 
-it('limite le panel Filament selon le rôle', function (string $role, bool $avecSociete, int $statut) {
-    $user = makeUser($role, $avecSociete ? makeCompany() : null);
+it('limite le panel Filament selon le rôle', function (string $role, int $statut) {
+    $company = makeCompany();
+    $user = $role === 'super_admin' ? makeUser($role) : makeUser($role, $company);
 
     $this->actingAs($user)->get('/admin')->assertStatus($statut);
 })->with([
-    'chauffeur' => ['chauffeur', true, 403],
-    'employé' => ['employe', true, 403],
-    'responsable' => ['responsable', true, 200],
-    'super admin' => ['super_admin', false, 200],
+    'chauffeur' => ['chauffeur', 403],
+    'employé' => ['employe', 403],
+    'responsable' => ['responsable', 200],
+    'super admin' => ['super_admin', 200],
 ]);
 
-it('réserve la gestion des sociétés au super admin', function (string $role, bool $avecSociete, int $statut) {
-    $user = makeUser($role, $avecSociete ? makeCompany() : null);
+it('réserve la gestion des sociétés au super admin', function (string $role, int $statut) {
+    $company = makeCompany();
+    $user = $role === 'super_admin' ? makeUser($role) : makeUser($role, $company);
 
     $this->actingAs($user)->get('/admin/companies')->assertStatus($statut);
 })->with([
-    'responsable' => ['responsable', true, 403],
-    'super admin' => ['super_admin', false, 200],
+    'responsable' => ['responsable', 403],
+    'super admin' => ['super_admin', 200],
 ]);
-
 it("réserve l'espace chauffeur aux chauffeurs et aux employés", function () {
     $company = makeCompany();
 

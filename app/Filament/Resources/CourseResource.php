@@ -22,6 +22,7 @@ class CourseResource extends Resource
     protected static ?string $model = Course::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-map';
+    protected static ?string $navigationGroup = 'Opérations';
 
     protected static ?string $navigationLabel = 'Courses';
 

@@ -4,20 +4,32 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use Illuminate\Http\Request;
+use App\Models\Vehicle;
+
 
 class DriverCourseController extends Controller
 {
     private const OPEN = ['planifiee', 'en_cours'];
 
-    public function index()
-    {
-        $courses = $this->coursesQuery()
-            ->with('clients')
-            ->orderByDesc('date_heure')
-            ->get();
+       public function index(Request $request)
+        {
+            $user = $request->user();
+            $vehicleId = $user->assignedVehicleId();
+            $vehicle = $vehicleId ? Vehicle::where('company_id', $user->company_id)->find($vehicleId) : null;
 
-        return view('chauffeur.courses.index', compact('courses'));
-    }
+            $courses = $vehicle
+                ? Course::with('clients')
+                    ->where('company_id', $user->company_id)
+                    ->where('vehicle_id', $vehicle->id)
+                    ->get()
+                : collect();
+
+            $aVenir = $courses->where('statut', 'planifiee')->sortBy('date_heure')->values();
+            $enCours = $courses->where('statut', 'en_cours')->sortBy('date_heure')->values();
+            $livrees = $courses->where('statut', 'livree')->sortByDesc('livree_at')->take(30)->values();
+
+            return view('chauffeur.courses.index', compact('vehicle', 'aVenir', 'enCours', 'livrees'));
+        }
 
     public function show(int $course)
     {

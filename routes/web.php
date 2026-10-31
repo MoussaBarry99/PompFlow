@@ -26,7 +26,8 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', EnsureRole::class.':chauffeur,employe']) ->prefix('chauffeur') ->name('chauffeur.') 
 ->group(function () 
-{ 
+{   Route::get('problemes/nouveau', [\App\Http\Controllers\VehicleIssueController::class, 'create'])->name('problemes.create');
+    Route::post('problemes', [\App\Http\Controllers\VehicleIssueController::class, 'store'])->name('problemes.store');
     Route::get('courses', [DriverCourseController::class, 'index'])->name('courses.index'); 
     Route::get('courses/{course}', [DriverCourseController::class, 'show'])->name('courses.show'); 
     Route::post('courses/{course}/start', [DriverCourseController::class, 'start'])->name('courses.start'); 
