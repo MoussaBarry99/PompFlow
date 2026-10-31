@@ -13,6 +13,10 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Closure;
+use Filament\Forms\Get;
+use Illuminate\Support\Carbon;
+
 
 
 class CourseResource extends Resource
@@ -27,12 +31,35 @@ class CourseResource extends Resource
 
         return $form->schema([
             Forms\Components\Select::make('vehicle_id')
-                ->label('Véhicule')
-                ->relationship('vehicle', 'immatriculation', fn ($query) => $query
-                    ->where('company_id', $companyId)
-                    ->where('statut_entretien', 'ok'))
-                ->searchable()
-                ->preload(),
+            ->label('Véhicule')
+            ->relationship('vehicle', 'immatriculation', fn ($query) => $query
+            ->where('company_id', $companyId)
+            ->where('statut_entretien', 'ok'))
+            ->searchable()
+            ->preload()
+            ->rules([fn (Get $get, $record): Closure => function (string $attribute, $value, Closure $fail) use ($get, $record) 
+                {
+                    if (! $value || ! $get('date_heure') || ! $get('livraison_prevue_at')) {
+                    return;
+                }
+                $conflit = Course::chevauchant(
+                    (int) $value,
+                    Carbon::parse($get('date_heure')),
+                    Carbon::parse($get('livraison_prevue_at')),
+                    $record?->id,
+                    )->first();
+
+                    if ($conflit) {
+                        $fail(
+                            'Ce véhicule est déjà pris du '
+                            . $conflit->date_heure->format('d/m H:i')
+                            . ' au '
+                            . $conflit->fin_effective->format('d/m H:i')
+                            . ' (' . $conflit->adresse_depart . ' → ' . $conflit->adresse_arrivee . ').'
+                        );
+                    }
+                },
+            ]),
             Forms\Components\TextInput::make('adresse_depart')
                 ->required()
                 ->maxLength(255),
@@ -44,7 +71,14 @@ class CourseResource extends Resource
                 ->required(),
             Forms\Components\DateTimePicker::make('livraison_prevue_at')
                 ->label('Livraison prévue')
-                ->required(),
+                ->required()
+                ->rules([
+                    fn (Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($get) {
+                        if ($value && $get('date_heure') && Carbon::parse($value)->lessThanOrEqualTo(Carbon::parse($get('date_heure')))) {
+                            $fail('La livraison prévue doit être après le départ prévu.');
+                        }
+                    },
+                ]),
             Forms\Components\Select::make('statut')
                 ->options([
                     'planifiee' => 'Planifiée',

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Course extends Model
@@ -32,6 +34,25 @@ class Course extends Model
             if ($course->isDirty('statut') && $course->statut === 'livree' && ! $course->livree_at) {
                 $course->livree_at = now();
             }
+
+            $planningModifie = ! $course->exists
+                || $course->isDirty(['vehicle_id', 'date_heure', 'livraison_prevue_at']);
+
+            if (
+                $planningModifie
+                && $course->vehicle_id
+                && $course->statut !== 'annulee'
+                && $course->date_heure
+                && $course->livraison_prevue_at
+                && Course::chevauchant(
+                    $course->vehicle_id,
+                    $course->date_heure,
+                    $course->livraison_prevue_at,
+                    $course->id
+                )->exists()
+            ) {
+                throw new \RuntimeException('Ce véhicule est déjà affecté à une course sur ce créneau.');
+            }
         });
 
         static::updating(function (Course $course) {
@@ -55,6 +76,19 @@ class Course extends Model
                 $course->statusHistories()->create(['statut' => $course->statut]);
             }
         });
+    }
+
+    public static function chevauchant(int $vehicleId, CarbonInterface $debut, CarbonInterface $fin, ?int $ignorerId = null): Builder
+    {
+        return static::query()
+            ->where('vehicle_id', $vehicleId)
+            ->where('statut', '!=', 'annulee')
+            ->when($ignorerId, fn (Builder $query) => $query->where('id', '!=', $ignorerId))
+            ->where('date_heure', '<', $fin->toDateTimeString())
+            ->whereRaw(
+                'COALESCE(livree_at, livraison_prevue_at, date_heure) > ?',
+                [$debut->toDateTimeString()]
+            );
     }
 
     public function rouvrir(): void
@@ -98,6 +132,11 @@ class Course extends Model
     public function expenses()
     {
         return $this->hasMany(CourseExpense::class);
+    }
+
+    public function getFinEffectiveAttribute(): ?CarbonInterface
+    {
+        return $this->livree_at ?? $this->livraison_prevue_at ?? $this->date_heure;
     }
 
     public function getMontantFactureTotalAttribute(): float
