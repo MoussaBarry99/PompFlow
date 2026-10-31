@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ClientResource\Pages;
-use App\Filament\Resources\ClientResource\RelationManagers;
 use App\Models\Client;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -11,52 +10,53 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ClientResource extends Resource
 {
     protected static ?string $model = Client::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
+
+    protected static ?string $navigationLabel = 'Clients';
+
+    protected static ?string $modelLabel = 'client';
+
+    protected static ?string $pluralModelLabel = 'clients';
+
+    protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('company_id')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('nom')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('contact')
-                    ->maxLength(255),
-            ]);
+        return $form->schema([
+            Forms\Components\TextInput::make('nom')
+                ->label('Nom du client')
+                ->required()
+                ->maxLength(255),
+            Forms\Components\TextInput::make('contact')
+                ->label('Contact (téléphone ou e-mail)')
+                ->maxLength(255),
+        ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('company_id')
-                    ->numeric()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('nom')
-                    ->searchable(),
+                    ->label('Nom')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('contact')
+                    ->label('Contact')
+                    ->placeholder('—')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Ajouté le')
+                    ->dateTime('d/m/Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
+            ->defaultSort('nom')
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
@@ -64,14 +64,8 @@ class ClientResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
+            ])
+            ->emptyStateHeading('Aucun client');
     }
 
     public static function getPages(): array
@@ -82,15 +76,27 @@ class ClientResource extends Resource
             'edit' => Pages\EditClient::route('/{record}/edit'),
         ];
     }
+
     public static function canViewAny(): bool
-        {
-            return auth()->user()->role === 'responsable';
-        }
+    {
+        return auth()->user()->role === 'responsable';
+    }
 
     public static function canCreate(): bool
-        {
-            return auth()->user()->role === 'responsable';
-        }
+    {
+        return auth()->user()->role === 'responsable';
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()->role === 'responsable';
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()->role === 'responsable';
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()

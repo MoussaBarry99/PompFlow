@@ -15,6 +15,7 @@ use Filament\Panel;
 use App\Models\Vehicle;
 use App\Models\Company;
 use App\Models\Course;
+use Illuminate\Support\Facades\DB;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
@@ -76,6 +77,28 @@ class User extends Authenticatable implements FilamentUser
     {
         return in_array($this->role, ['super_admin', 'responsable']);
     }
-    
+    public function affecterVehicule(?int $vehicleId): bool
+    {
+        return DB::transaction(function () use ($vehicleId) {
+            if ($vehicleId) {
+                $vehicle = Vehicle::whereKey($vehicleId)
+                    ->where('company_id', $this->company_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $vehicle || ($vehicle->driver_id && (int) $vehicle->driver_id !== (int) $this->id)) {
+                    return false;
+                }
+
+                $vehicle->update(['driver_id' => $this->id]);
+            }
+
+            Vehicle::where('driver_id', $this->id)
+                ->when($vehicleId, fn ($query) => $query->whereKeyNot($vehicleId))
+                ->update(['driver_id' => null]);
+
+            return true;
+        });
+    }
 
 }

@@ -10,25 +10,30 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CompanyResource extends Resource
 {
     protected static ?string $model = Company::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
+
+    protected static ?string $navigationLabel = 'Sociétés';
+
+    protected static ?string $modelLabel = 'société';
+
+    protected static ?string $pluralModelLabel = 'sociétés';
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('nom')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('adresse')
-                    ->maxLength(255),
-            ]);
+        return $form->schema([
+            Forms\Components\TextInput::make('nom')
+                ->label('Nom de la société')
+                ->required()
+                ->maxLength(255),
+            Forms\Components\TextInput::make('adresse')
+                ->label('Adresse')
+                ->maxLength(255),
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -36,20 +41,24 @@ class CompanyResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nom')
-                    ->searchable(),
+                    ->label('Société')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('adresse')
+                    ->label('Adresse')
+                    ->placeholder('—')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('users_count')
+                    ->label('Membres')
+                    ->counts('users'),
+                Tables\Columns\TextColumn::make('vehicles_count')
+                    ->label('Véhicules')
+                    ->counts('vehicles'),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Créée le')
+                    ->dateTime('d/m/Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->filters([
-                //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -58,14 +67,14 @@ class CompanyResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->emptyStateHeading('Aucune société');
     }
 
     public static function getRelations(): array
     {
         return [
             RelationManagers\UsersRelationManager::class,
-            
         ];
     }
 
@@ -77,16 +86,24 @@ class CompanyResource extends Resource
             'edit' => Pages\EditCompany::route('/{record}/edit'),
         ];
     }
+
     public static function canViewAny(): bool
     {
         return auth()->user()->role === 'super_admin';
     }
+
     public static function canCreate(): bool
     {
         return auth()->user()->role === 'super_admin';
     }
+
     public static function canEdit($record): bool
     {
-        return auth()->user()->role === 'super_admin'; 
-}
+        return auth()->user()->role === 'super_admin';
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()->role === 'super_admin';
+    }
 }

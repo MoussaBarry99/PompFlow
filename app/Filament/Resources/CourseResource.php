@@ -6,25 +6,30 @@ use App\Filament\Resources\CourseResource\Pages;
 use App\Filament\Resources\CourseResource\RelationManagers;
 use App\Models\Client;
 use App\Models\Course;
+use App\Support\Money;
+use Closure;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Closure;
-use Filament\Forms\Get;
 use Illuminate\Support\Carbon;
-use App\Support\Money;
-
-
 
 class CourseResource extends Resource
 {
     protected static ?string $model = Course::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-map';
+
+    protected static ?string $navigationLabel = 'Courses';
+
+    protected static ?string $modelLabel = 'course';
+
+    protected static ?string $pluralModelLabel = 'courses';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
@@ -32,39 +37,42 @@ class CourseResource extends Resource
 
         return $form->schema([
             Forms\Components\Select::make('vehicle_id')
-            ->label('Véhicule')
-            ->relationship('vehicle', 'immatriculation', fn ($query) => $query
-            ->where('company_id', $companyId)
-            ->where('statut_entretien', 'ok'))
-            ->searchable()
-            ->preload()
-            ->rules([fn (Get $get, $record): Closure => function (string $attribute, $value, Closure $fail) use ($get, $record) 
-                {
-                    if (! $value || ! $get('date_heure') || ! $get('livraison_prevue_at')) {
-                    return;
-                }
-                $conflit = Course::chevauchant(
-                    (int) $value,
-                    Carbon::parse($get('date_heure')),
-                    Carbon::parse($get('livraison_prevue_at')),
-                    $record?->id,
-                    )->first();
+                ->label('Véhicule')
+                ->relationship('vehicle', 'immatriculation', fn ($query) => $query
+                    ->where('company_id', $companyId)
+                    ->where('statut_entretien', 'ok'))
+                ->searchable()
+                ->preload()
+                ->rules([
+                    fn (Get $get, $record): Closure => function (string $attribute, $value, Closure $fail) use ($get, $record) {
+                        if (! $value || ! $get('date_heure') || ! $get('livraison_prevue_at')) {
+                            return;
+                        }
 
-                    if ($conflit) {
-                        $fail(
-                            'Ce véhicule est déjà pris du '
-                            . $conflit->date_heure->format('d/m H:i')
-                            . ' au '
-                            . $conflit->fin_effective->format('d/m H:i')
-                            . ' (' . $conflit->adresse_depart . ' → ' . $conflit->adresse_arrivee . ').'
-                        );
-                    }
-                },
-            ]),
+                        $conflit = Course::chevauchant(
+                            (int) $value,
+                            Carbon::parse($get('date_heure')),
+                            Carbon::parse($get('livraison_prevue_at')),
+                            $record?->id,
+                        )->first();
+
+                        if ($conflit) {
+                            $fail(
+                                'Ce véhicule est déjà pris du '
+                                . $conflit->date_heure->format('d/m H:i')
+                                . ' au '
+                                . $conflit->fin_effective->format('d/m H:i')
+                                . ' (' . $conflit->adresse_depart . ' → ' . $conflit->adresse_arrivee . ').'
+                            );
+                        }
+                    },
+                ]),
             Forms\Components\TextInput::make('adresse_depart')
+                ->label('Adresse de départ')
                 ->required()
                 ->maxLength(255),
             Forms\Components\TextInput::make('adresse_arrivee')
+                ->label('Point de dépôt (arrivée)')
                 ->required()
                 ->maxLength(255),
             Forms\Components\DateTimePicker::make('date_heure')
@@ -81,6 +89,7 @@ class CourseResource extends Resource
                     },
                 ]),
             Forms\Components\Select::make('statut')
+                ->label('Statut')
                 ->options([
                     'planifiee' => 'Planifiée',
                     'en_cours' => 'En cours',
@@ -107,11 +116,14 @@ class CourseResource extends Resource
                         ->minValue(0)
                         ->suffix('GNF'),
                     Forms\Components\TextInput::make('type_marchandise')
+                        ->label('Type de marchandise')
                         ->maxLength(255),
                     Forms\Components\TextInput::make('poids_kg')
+                        ->label('Poids')
                         ->numeric()
                         ->suffix('kg'),
                     Forms\Components\Textarea::make('description_marchandise')
+                        ->label('Détail de la marchandise')
                         ->columnSpanFull(),
                 ])
                 ->columns(2)
@@ -140,7 +152,8 @@ class CourseResource extends Resource
                     ->label('Arrivée')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('vehicle.immatriculation')
-                    ->label('Véhicule'),
+                    ->label('Véhicule')
+                    ->placeholder('Non affecté'),
                 Tables\Columns\TextColumn::make('montant_facture_total')
                     ->label('Facturé')
                     ->formatStateUsing(fn ($state) => Money::format($state)),
@@ -151,56 +164,59 @@ class CourseResource extends Resource
                     ->label('Net')
                     ->formatStateUsing(fn ($state) => Money::format($state))
                     ->color(fn ($state) => $state < 0 ? 'danger' : 'success'),
-                                Tables\Columns\TextColumn::make('statut_affiche')
+                Tables\Columns\TextColumn::make('statut_affiche')
                     ->label('Statut')
-                    ->state(function (Course $record): string {
-                        return match (true) {
-                            $record->statut === 'livree' && $record->en_retard => 'Livrée en retard',
-                            $record->statut === 'livree' => 'Livrée',
-                            $record->statut === 'annulee' => 'Annulée',
-                            $record->en_retard => 'En retard',
-                            $record->statut === 'en_cours' => 'En cours',
-                            default => 'Planifiée',
-                        };
-                    })
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Livrée' => 'success',
-                        'Livrée en retard' => 'warning',
-                        'En retard' => 'danger',
-                        'En cours' => 'info',
-                        default => 'gray',
-                    }),
+                    ->color(fn (Course $record): string => $record->statut_couleur),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Créée le')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('date_heure', 'desc')
             ->filters([
-                Tables\Filters\SelectFilter::make('statut')->options([
-                    'planifiee' => 'Planifiée',
-                    'en_cours' => 'En cours',
-                    'livree' => 'Livrée',
-                    'annulee' => 'Annulée',
-                ]),
+                Tables\Filters\SelectFilter::make('statut')
+                    ->label('Statut')
+                    ->options([
+                        'planifiee' => 'Planifiée',
+                        'en_cours' => 'En cours',
+                        'livree' => 'Livrée',
+                        'annulee' => 'Annulée',
+                    ]),
             ])
             ->actions([
-            Tables\Actions\EditAction::make(),
-            Tables\Actions\ViewAction::make()
-            ->visible(fn (Course $record): bool => $record->statut === 'livree'),
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn (Course $record): bool => $record->statut === 'livree'),
             ])
-            ->checkIfRecordIsSelectableUsing(fn (Course $record): bool => $record->statut !== 'livree');
-                }
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ])
+            ->checkIfRecordIsSelectableUsing(fn (Course $record): bool => $record->statut !== 'livree')
+            ->recordUrl(fn (Course $record): string => $record->statut === 'livree'
+                ? static::getUrl('view', ['record' => $record])
+                : static::getUrl('edit', ['record' => $record]))
+            ->emptyStateHeading('Aucune course');
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\ExpensesRelationManager::class,
+        ];
+    }
 
     public static function getPages(): array
     {
-    return [
-        'index' => Pages\ListCourses::route('/'),
-        'create' => Pages\CreateCourse::route('/create'),
-        'view' => Pages\ViewCourse::route('/{record}'),
-        'edit' => Pages\EditCourse::route('/{record}/edit'),
-    ];
+        return [
+            'index' => Pages\ListCourses::route('/'),
+            'create' => Pages\CreateCourse::route('/create'),
+            'view' => Pages\ViewCourse::route('/{record}'),
+            'edit' => Pages\EditCourse::route('/{record}/edit'),
+        ];
     }
 
     public static function canViewAny(): bool
@@ -212,6 +228,7 @@ class CourseResource extends Resource
     {
         return auth()->user()->role === 'responsable';
     }
+
     public static function canEdit($record): bool
     {
         return auth()->user()->role === 'responsable' && $record->statut !== 'livree';
@@ -229,12 +246,4 @@ class CourseResource extends Resource
             ->withSum('expenses', 'montant')
             ->withSum('courseClients', 'montant_facture');
     }
-
-    public static function getRelations(): array
-    {
-        return [
-            RelationManagers\ExpensesRelationManager::class,
-        ];
-    }
-    
 }
