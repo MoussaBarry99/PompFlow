@@ -16,6 +16,8 @@ use App\Models\Vehicle;
 use App\Models\Company;
 use App\Models\Course;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\CompteCree;
+use Illuminate\Support\Facades\Password;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
@@ -99,6 +101,22 @@ class User extends Authenticatable implements FilamentUser
 
             return true;
         });
+    }
+    public function envoyerInvitation(): bool
+    {
+        if ($this->role === 'super_admin') {
+            return false;
+        }
+
+        try {
+            $this->notify(new CompteCree(Password::broker()->createToken($this)));
+
+            return true;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return false;
+        }
     }
 
 }

@@ -24,9 +24,14 @@ class Company extends Model
     {
         return $this->hasMany(Course::class);
     }
+    
     protected $fillable = [
         'nom',
         'contact',
         'adresse',
     ];
+    public function getLibelleAttribute(): string
+    {
+        return $this->attributes['nom'] ?? $this->attributes['name'] ?? '';
+    }
 }

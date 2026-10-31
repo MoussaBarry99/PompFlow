@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DriverCourseController;
 use App\Http\Middleware\EnsureRole;
+use App\Http\Controllers\InvoiceController;
 
 
 Route::get('/', function () {
@@ -13,6 +14,11 @@ Route::get('/', function () {
 
     return view('accueil');
 })->name('accueil');
+
+Route::middleware(['auth', EnsureRole::class.':responsable'])
+    ->get('/factures/{courseClient}', [InvoiceController::class, 'telecharger'])
+    ->name('factures.telecharger');
+    
 Route::get('/dashboard', function () {
      return in_array(auth()->user()->role, ['super_admin', 'responsable'], true) ? 
      redirect('/admin') : redirect()->route('chauffeur.courses.index'); 

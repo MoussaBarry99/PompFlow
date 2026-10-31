@@ -15,7 +15,7 @@
             {{-- Véhicule + signalement --}}
             <div class="flex items-center justify-between gap-3 rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100">
                 <div>
-                    <p class="text-xs uppercase tracking-wide text-gray-500">Bonjour {{ auth()->user()->name }}</p>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Bonjour {{ auth()->user()->name }} · {{ auth()->user()->company?->libelle }}</p>
                     @if ($vehicle)
                         <p class="font-semibold text-gray-900">
                             {{ $vehicle->immatriculation }}

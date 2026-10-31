@@ -207,6 +207,7 @@ class CourseResource extends Resource
     {
         return [
             RelationManagers\ExpensesRelationManager::class,
+            RelationManagers\CourseClientsRelationManager::class
         ];
     }
 

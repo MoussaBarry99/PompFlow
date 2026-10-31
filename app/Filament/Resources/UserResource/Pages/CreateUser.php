@@ -32,5 +32,14 @@ class CreateUser extends CreateRecord
                 ->warning()
                 ->send();
         }
+        if (! $this->record->envoyerInvitation()) 
+            {
+                Notification::make()
+                ->warning()
+                ->title("Compte créé, mais l'email n'a pas pu être envoyé")
+                ->body("Utilise « Renvoyer l'invitation » dans la liste.")
+                ->send();
+        }
     }
+    
 }

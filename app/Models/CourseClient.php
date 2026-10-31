@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class CourseClient extends Model
 {
@@ -25,5 +26,9 @@ class CourseClient extends Model
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+    public function invoice(): HasOne
+    {
+        return $this->hasOne(Invoice::class);
     }
 }
