@@ -9,15 +9,9 @@ use Illuminate\Validation\Rule;
 
 class VehicleIssueController extends Controller
 {
-    public function create(Request $request)
+    public function create()
     {
-        $vehicle = $this->vehicleOf($request);
-
-        $issues = $vehicle
-            ? VehicleIssue::where('vehicle_id', $vehicle->id)->latest()->take(10)->get()
-            : collect();
-
-        return view('chauffeur.problemes.create', compact('vehicle', 'issues'));
+        return redirect()->route('chauffeur.vehicule');
     }
 
     public function store(Request $request)
@@ -41,8 +35,9 @@ class VehicleIssueController extends Controller
         ]);
 
         return redirect()
-            ->route('chauffeur.problemes.create')
-            ->with('status', 'Signalement envoyé au responsable.');
+                ->route('chauffeur.vehicule')
+                ->withFragment('signaler')
+                ->with('status', 'Signalement envoyé au responsable.');
     }
 
     private function vehicleOf(Request $request): ?Vehicle
@@ -54,4 +49,5 @@ class VehicleIssueController extends Controller
             ? Vehicle::where('company_id', $user->company_id)->find($vehicleId)
             : null;
     }
+    
 }

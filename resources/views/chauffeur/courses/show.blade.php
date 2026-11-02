@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-chauffeur-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between gap-3">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -52,7 +52,7 @@
                 <ul class="divide-y divide-gray-100">
                     @foreach ($course->courseClients as $cc)
                         <li class="py-2">
-                            <p class="font-medium text-gray-800">{{ $cc->client->nom }}</p>
+                            <p class="font-medium text-gray-800"> {{"Client: " . $cc->client->nom }} {{"Contact: " . $cc->client->contact}}</p>
                             <p class="text-sm text-gray-600">
                                 {{ $cc->type_marchandise ?? 'Marchandise non précisée' }}
                                 @if ($cc->poids_kg) · {{ (float) $cc->poids_kg }} kg @endif
@@ -142,4 +142,4 @@
                class="block text-center text-sm text-gray-600 hover:underline">← Retour à mes courses</a>
         </div>
     </div>
-</x-app-layout>
+</x-chauffeur-layout>

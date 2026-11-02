@@ -27,7 +27,7 @@ it('permet au chauffeur de signaler un problème sur son véhicule', function ()
             'gravite' => 'urgente',
             'description' => 'Les freins grincent fortement.',
         ])
-        ->assertRedirect(route('chauffeur.problemes.create'));
+        ->assertRedirect(route('chauffeur.vehicule') . '#signaler');
 
     $this->assertDatabaseHas('vehicle_issues', [
         'company_id' => $company->id,
