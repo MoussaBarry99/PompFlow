@@ -42,7 +42,7 @@ class VehicleResource extends Resource
                 ->numeric()
                 ->integer()
                 ->minValue(0)
-                ->suffix('kg'),
+                ->suffix('tonnes'),
             Forms\Components\Select::make('statut_entretien')
                 ->label('État du véhicule')
                 ->options([
@@ -67,7 +67,15 @@ class VehicleResource extends Resource
                 ->searchable()
                 ->preload()
                 ->placeholder('Aucun chauffeur')
-                ->helperText('Seuls les chauffeurs pas encore affectés à un véhicule sont proposés.'),
+                ->helperText(''),
+            Forms\Components\DatePicker::make('prochain_entretien')
+                ->label('Prochain entretien')
+                ->native(false)
+                ->displayFormat('d/m/Y')
+                ->closeOnDateSelection()
+                ->minDate(today())
+                ->helperText('mettre à jour la date après chaque entretien.'),
+        
         ]);
     }
 
@@ -86,7 +94,7 @@ class VehicleResource extends Resource
                 Tables\Columns\TextColumn::make('capacite')
                     ->label('Capacité')
                     ->formatStateUsing(fn ($state) => $state
-                        ? number_format((float) $state, 0, ',', "\u{00A0}") . "\u{00A0}kg"
+                        ? number_format((float) $state, 0, ',', "\u{00A0}") . "\u{00A0}tonnes"
                         : '—')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('statut_entretien')
@@ -102,6 +110,18 @@ class VehicleResource extends Resource
                         'ok' => 'success',
                         'en_entretien' => 'warning',
                         'hors_service' => 'danger',
+                        default => 'gray',
+                    }),
+                    Tables\Columns\TextColumn::make('prochain_entretien')
+                    ->label('Prochain entretien')
+                    ->date('d/m/Y')
+                    ->placeholder('Non planifié')
+                    ->sortable()
+                    ->badge()
+                    ->color(fn (Vehicle $record): string => match ($record->entretien_statut) {
+                        'en_retard' => 'danger',
+                        'bientot' => 'warning',
+                        'ok' => 'success',
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('driver.name')
@@ -126,6 +146,12 @@ class VehicleResource extends Resource
                         'en_entretien' => 'En entretien',
                         'hors_service' => 'Hors service',
                     ]),
+                    Tables\Filters\Filter::make('entretien_a_prevoir')
+                        ->label('Entretien à prévoir')
+                        ->toggle()
+                        ->query(fn (\Illuminate\Database\Eloquent\Builder $query) => $query
+                            ->whereNotNull('prochain_entretien')
+                            ->whereDate('prochain_entretien', '<=', today()->addDays(14))),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

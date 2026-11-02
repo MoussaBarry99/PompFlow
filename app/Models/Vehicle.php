@@ -13,6 +13,7 @@ class Vehicle extends Model
         'type',
         'capacite',
         'statut_entretien',
+        'prochain_entretien',
     ];
 
     public function company()
@@ -33,5 +34,21 @@ class Vehicle extends Model
     public function courses()
     {
         return $this->hasMany(Course::class);
+    }
+    protected function casts(): array
+    {
+        return ['prochain_entretien' => 'date'];
+    }
+    /** non_planifie | en_retard | bientot (≤ 14 jours) | ok */
+public function getEntretienStatutAttribute(): string
+    {
+        $date = $this->prochain_entretien;
+
+        return match (true) {
+            $date === null => 'non_planifie',
+            $date->lt(today()) => 'en_retard',
+            $date->lte(today()->addDays(14)) => 'bientot',
+            default => 'ok',
+        };
     }
 }
