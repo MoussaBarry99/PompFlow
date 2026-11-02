@@ -6,6 +6,12 @@
     <x-application-logo class="mx-auto mb-4 h-16 w-16" style="width:4rem;height:4rem" />
     <title>PompFlow - Gestion des courses de transport</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
+    <meta name="theme-color" content="#f0902f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="PompFlow">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px; padding: 24px; font-family: system-ui, -apple-system, sans-serif; background: #f3f4f6; color: #1f2937; }
