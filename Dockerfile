@@ -1,5 +1,5 @@
 # --- 1. Construction des assets (Vite / Tailwind) ---
-FROM node:22-alpine AS assets
+FROM node:24-alpine AS assets
 WORKDIR /app
 COPY package*.json .npmrc ./
 RUN npm ci
